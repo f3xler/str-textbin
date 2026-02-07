@@ -365,7 +365,8 @@
             }
 
             const noExpiry = document.getElementById('noExpiry').checked;
-            const expiryDate = noExpiry ? null : document.getElementById('expiryDate').value;
+            const expiryDateInput = document.getElementById('expiryDate').value;
+            const expiryDate = (noExpiry || !expiryDateInput) ? null : expiryDateInput;
             const customId = document.getElementById('customId').value.trim() || null;
 
             showLoading();
@@ -375,9 +376,16 @@
             try {
                 const payload = {
                     content: textContent,
-                    expiry: expiryDate || null,
-                    customId: customId
+                    expiry: expiryDate,
+                    customId: customId || undefined
                 };
+                
+                // Remove undefined values from payload
+                Object.keys(payload).forEach(key => {
+                    if (payload[key] === undefined) {
+                        delete payload[key];
+                    }
+                });
 
                 console.log('Sending request to:', `${API_BASE}/api/textbin/create`);
                 console.log('Payload:', payload);
