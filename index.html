@@ -379,20 +379,34 @@
                     customId: customId
                 };
 
+                console.log('Sending request to:', `${API_BASE}/api/textbin/create`);
+                console.log('Payload:', payload);
+
                 const response = await fetch(`${API_BASE}/api/textbin/create`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    mode: 'cors'
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+                    }
                     throw new Error(errorData.error || `HTTP ${response.status}`);
                 }
 
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 // Display URLs
                 const baseUrl = window.location.origin;
@@ -407,7 +421,13 @@
                 showResult();
             } catch (error) {
                 console.error('Create paste error:', error);
-                showError('Failed to create paste: ' + error.message);
+                let errorMessage = 'Failed to create paste: ' + error.message;
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage = 'Network error: Unable to connect to the server. Please check your internet connection and try again.';
+                }
+                
+                showError(errorMessage);
             } finally {
                 hideLoading();
             }
