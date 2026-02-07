@@ -407,14 +407,25 @@
                 if (!response.ok) {
                     let errorData;
                     try {
-                        errorData = await response.json();
+                        const text = await response.text();
+                        console.log('Error response text:', text);
+                        errorData = JSON.parse(text);
                     } catch (e) {
+                        console.error('Failed to parse error response:', e);
                         errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
                     }
-                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const data = await response.json();
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Failed to parse response:', e);
+                    throw new Error('Invalid JSON response from server');
+                }
                 console.log('Response data:', data);
                 
                 // Display URLs
@@ -430,10 +441,20 @@
                 showResult();
             } catch (error) {
                 console.error('Create paste error:', error);
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                
                 let errorMessage = 'Failed to create paste: ' + error.message;
                 
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    errorMessage = 'Network error: Unable to connect to the server. Please check your internet connection and try again.';
+                if (error.name === 'TypeError' && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch'))) {
+                    errorMessage = 'Network error: Unable to connect to the server. This could be due to:\n' +
+                        '1. CORS policy blocking the request\n' +
+                        '2. Server is down or unreachable\n' +
+                        '3. Network connectivity issues\n\n' +
+                        'Please check the browser console for more details.';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage = 'CORS error: The server is blocking cross-origin requests. Please contact the administrator.';
                 }
                 
                 showError(errorMessage);
