@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextBin - Share Your Text</title>
+    <meta name="description" content="A simple text pastebin service">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        input[type="datetime-local"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="datetime-local"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .url-display {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .url-display strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .url-link {
+            color: #667eea;
+            text-decoration: none;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+        }
+
+        .url-link:hover {
+            text-decoration: underline;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.show {
+            display: block;
+        }
+
+        .text-display {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 600px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .actions button {
+            margin-top: 0;
+            flex: 1;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        @media (max-width: 768px) {
+            .options {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 TextBin</h1>
+            <p class="subtitle">Share your text with obfuscated URLs</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Create Section -->
+            <div class="form-section" id="createSection">
+                <label for="textContent">Paste or type your text:</label>
+                <textarea id="textContent" placeholder="Enter your text here..."></textarea>
+
+                <div class="options">
+                    <div>
+                        <label for="expiryDate">Expiry Date (Optional):</label>
+                        <input type="datetime-local" id="expiryDate" />
+                        <div class="checkbox-group" style="margin-top: 10px;">
+                            <input type="checkbox" id="noExpiry" checked />
+                            <label for="noExpiry" style="margin: 0; font-weight: normal;">No expiry</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="customId">Custom ID (Optional):</label>
+                        <input type="text" id="customId" placeholder="Leave empty for auto-generated" />
+                    </div>
+                </div>
+
+                <button onclick="createPaste()" id="createBtn">Create Paste</button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Creating paste...</p>
+                </div>
+
+                <div class="error" id="error"></div>
+
+                <div class="result-section" id="resultSection">
+                    <div class="url-display">
+                        <strong>Your paste URL:</strong>
+                        <a href="#" id="pasteUrl" class="url-link" target="_blank"></a>
+                        <button class="copy-btn" onclick="copyUrl()">Copy URL</button>
+                    </div>
+                    <div class="url-display">
+                        <strong>Raw text URL:</strong>
+                        <a href="#" id="rawUrl" class="url-link" target="_blank"></a>
+                        <button class="copy-btn" onclick="copyRawUrl()">Copy Raw URL</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Section -->
+            <div class="view-section" id="viewSection">
+                <h2>Paste Content</h2>
+                <div class="text-display" id="textDisplay"></div>
+                <div class="actions">
+                    <button onclick="viewRaw()" class="btn-secondary">View Raw</button>
+                    <button onclick="goHome()">Create New</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://str.pics';
+
+        // Check if we're viewing a paste
+        const path = window.location.pathname;
+        const pathParts = path.split('/').filter(p => p);
+        
+        if (pathParts.length > 0 && pathParts[0] !== '') {
+            const pasteId = pathParts[0];
+            const isRaw = pathParts.includes('raw');
+            loadPaste(pasteId, isRaw);
+        }
+
+        document.getElementById('noExpiry').addEventListener('change', function() {
+            document.getElementById('expiryDate').disabled = this.checked;
+        });
+
+        async function createPaste() {
+            const textContent = document.getElementById('textContent').value.trim();
+            if (!textContent) {
+                showError('Please enter some text');
+                return;
+            }
+
+            const noExpiry = document.getElementById('noExpiry').checked;
+            const expiryDate = noExpiry ? null : document.getElementById('expiryDate').value;
+            const customId = document.getElementById('customId').value.trim() || null;
+
+            showLoading();
+            hideError();
+            hideResult();
+
+            try {
+                const payload = {
+                    content: textContent,
+                    expiry: expiryDate || null,
+                    customId: customId
+                };
+
+                const response = await fetch(`${API_BASE}/api/textbin/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Display URLs
+                const baseUrl = window.location.origin;
+                const pasteUrl = `${baseUrl}/${data.id}`;
+                const rawUrl = `${baseUrl}/${data.id}/raw`;
+
+                document.getElementById('pasteUrl').href = pasteUrl;
+                document.getElementById('pasteUrl').textContent = pasteUrl;
+                document.getElementById('rawUrl').href = rawUrl;
+                document.getElementById('rawUrl').textContent = rawUrl;
+
+                showResult();
+            } catch (error) {
+                console.error('Create paste error:', error);
+                showError('Failed to create paste: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadPaste(id, isRaw = false) {
+            showLoading();
+            hideError();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/textbin/get/${id}`);
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Paste not found or expired');
+                    }
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (isRaw) {
+                    // Show raw text
+                    document.body.innerHTML = `
+                        <pre style="padding: 20px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(data.content)}</pre>
+                    `;
+                } else {
+                    // Show formatted view
+                    document.getElementById('createSection').style.display = 'none';
+                    document.getElementById('viewSection').classList.add('show');
+                    document.getElementById('textDisplay').textContent = data.content;
+                }
+            } catch (error) {
+                console.error('Load paste error:', error);
+                document.body.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: white;">
+                        <h1>Error</h1>
+                        <p>${escapeHtml(error.message)}</p>
+                        <a href="/" style="color: white; text-decoration: underline;">Go Home</a>
+                    </div>
+                `;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function viewRaw() {
+            const path = window.location.pathname;
+            const pathParts = path.split('/').filter(p => p);
+            if (pathParts.length > 0) {
+                window.location.href = `/${pathParts[0]}/raw`;
+            }
+        }
+
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        function copyUrl() {
+            const url = document.getElementById('pasteUrl').textContent;
+            copyToClipboard(url);
+        }
+
+        function copyRawUrl() {
+            const url = document.getElementById('rawUrl').textContent;
+            copyToClipboard(url);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('URL copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy URL');
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('createBtn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+            document.getElementById('createBtn').disabled = false;
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.remove('show');
+        }
+
+        function showResult() {
+            document.getElementById('resultSection').classList.add('show');
+        }
+
+        function hideResult() {
+            document.getElementById('resultSection').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
+
