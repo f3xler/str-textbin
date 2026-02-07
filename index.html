@@ -397,7 +397,8 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify(payload),
-                    mode: 'cors'
+                    mode: 'cors',
+                    credentials: 'omit'
                 });
 
                 console.log('Response status:', response.status);
