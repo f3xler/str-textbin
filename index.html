@@ -390,7 +390,11 @@
                 console.log('Sending request to:', `${API_BASE}/api/textbin/create`);
                 console.log('Payload:', payload);
 
-                const response = await fetch(`${API_BASE}/api/textbin/create`, {
+                // Make the request
+                const url = `${API_BASE}/api/textbin/create`;
+                console.log('Fetching URL:', url);
+                
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -398,7 +402,8 @@
                     },
                     body: JSON.stringify(payload),
                     mode: 'cors',
-                    credentials: 'omit'
+                    credentials: 'omit',
+                    cache: 'no-cache'
                 });
 
                 console.log('Response status:', response.status);
